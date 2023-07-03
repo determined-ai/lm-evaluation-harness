@@ -13,7 +13,7 @@ def test_pattern_match_single():
     assert len(task_names) == 1
 
 
-def test_pattern_match_glob_two():
-    task_names = pattern_match(["arc_*"], tasks.ALL_TASKS)
+def test_pattern_match_glob():
+    task_names = pattern_match(["hendrycksTest-*"], tasks.ALL_TASKS)
     assert task_names
-    assert len(task_names) == 2
+    assert len(task_names) == 57

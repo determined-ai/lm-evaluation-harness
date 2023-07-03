@@ -69,8 +69,6 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
     # converted to multiple tests.
     assert isinstance(hparams["task"], str)
     task_names = pattern_match([hparams["task"]], tasks.ALL_TASKS)
-    print(hparams["task"])
-    print(task_names)
     assert task_names
 
     results = evaluator.simple_evaluate(
