@@ -47,14 +47,6 @@ def parse_args():
 # match at least one of the patterns
 
 
-def pattern_match(patterns, source_list):
-    task_names = set()
-    for pattern in patterns:
-        for matching in fnmatch.filter(source_list, pattern):
-            task_names.add(matching)
-    return list(task_names)
-
-
 def main(core_context: det.core.Context, hparams: Dict[str, Any]):
     args = parse_args()
 
