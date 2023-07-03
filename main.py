@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 import determined as det
 
-from lm_eval import evaluator, tasks, utils
+from lm_eval import evaluator, tasks
 
 logging.getLogger("openai").setLevel(logging.WARNING)
 
@@ -33,6 +33,12 @@ def parse_args():
 
 # Returns a list containing all values of the source_list that
 # match at least one of the patterns
+def pattern_match(patterns, source_list):
+    task_names = set()
+    for pattern in patterns:
+        for matching in fnmatch.filter(source_list, pattern):
+            task_names.add(matching)
+    return list(task_names)
 
 
 def main(core_context: det.core.Context, hparams: Dict[str, Any]):
@@ -58,10 +64,11 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         )
     else:
         model_args = None
+
     # GG_NOTE: task will always be a single string, but it may be a glob-pattern which will get
     # converted to multiple tests.
     assert isinstance(hparams["task"], str)
-    task_names = utils.pattern_match(hparams["task"], tasks.ALL_TASKS)
+    task_names = pattern_match(hparams["task"], tasks.ALL_TASKS)
 
     results = evaluator.simple_evaluate(
         model=model,
