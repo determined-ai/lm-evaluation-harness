@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 import determined as det
 
-from lm_eval import evaluator
+from lm_eval import evaluator, tasks, utils
 
 logging.getLogger("openai").setLevel(logging.WARNING)
 
@@ -70,18 +70,17 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         )
     else:
         model_args = None
-    # We always run a single task
-    if isinstance(hparams["task"], str):
-        task = [hparams["task"]]
-    elif isinstance(hparams["task"], list):
-        task = hparams["task"]
+    # GG_NOTE: task will always be a single string, but it may be a glob-pattern which will get
+    # converted to multiple tests.
+    assert isinstance(hparams["task"], str)
+    task_names = utils.pattern_match(hparams["task"], tasks.ALL_TASKS)
 
     results = evaluator.simple_evaluate(
         model=model,
         core_context=core_context,
         uuid=uuid,
         model_args=model_args,
-        tasks=task,
+        tasks=task_names,
         num_fewshot=args.num_fewshot,
         batch_size=args.batch_size,
         device=args.device,
