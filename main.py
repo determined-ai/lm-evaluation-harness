@@ -80,7 +80,8 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
     # GG_NOTE: task will always be a single string, but it may be a glob-pattern which will get
     # converted to multiple tests.
     assert isinstance(hparams["task"], str)
-    task_names = pattern_match(hparams["task"], tasks.ALL_TASKS)
+    task_names = pattern_match([hparams["task"]], tasks.ALL_TASKS)
+    assert task_names
 
     results = evaluator.simple_evaluate(
         model=model,

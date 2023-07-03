@@ -8,7 +8,7 @@ from main import pattern_match
 
 
 def test_pattern_match_single():
-    task_names = pattern_match(["qnli"], tasks.ALL_TASKS)
+    task_names = pattern_match(["arc_easy"], tasks.ALL_TASKS)
     assert task_names
     assert len(task_names) == 1
 
