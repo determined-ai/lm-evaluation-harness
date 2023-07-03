@@ -1,11 +1,17 @@
 import collections
 import itertools
+import logging
 import random
+from typing import Optional
 
+import determined as det
+import numpy as np
+from transformers.trainer_utils import get_last_checkpoint
+
+import lm_eval.base
 import lm_eval.metrics
 import lm_eval.models
 import lm_eval.tasks
-import lm_eval.base
 from lm_eval.utils import positional_deprecated, run_task_tests
 from lm_eval.models.gpt2 import HFLM
 
@@ -16,6 +22,8 @@ import transformers
 @positional_deprecated
 def simple_evaluate(
     model,
+    core_context: det.core.Context,
+    uuid: Optional[str] = None,
     model_args=None,
     tasks=[],
     num_fewshot=0,
@@ -69,22 +77,26 @@ def simple_evaluate(
     np.random.seed(1234)
 
     assert tasks != [], "No tasks specified"
-
-    if isinstance(model, str):
-        if model_args is None:
-            model_args = ""
+    assert isinstance(model, str), "Expected the model to be specified as a string"
+    assert isinstance(model_args, str), "Expected model_args to be a string"
+    assert (
+        sum((uuid is None, model_args is None)) == 1
+    ), f"Expected exactly one of uuid and model_args to be None, recieved {uuid}, {model_args}"
+    if uuid is not None:
+        logging.info(f"Loading model from checkpoint uuid {uuid}")
+        with core_context.checkpoint.restore_path(uuid) as path:
+            lm = lm_eval.models.get_model(model).create_from_arg_string(
+                "",
+                {
+                    "batch_size": batch_size,
+                    "device": device,
+                    "pretrained": get_last_checkpoint(path),
+                },
+            )
+    else:
         lm = lm_eval.models.get_model(model).create_from_arg_string(
             model_args, {"batch_size": batch_size, "max_batch_size": max_batch_size, "device": device}
         )
-    elif isinstance(model, transformers.PreTrainedModel):
-        lm = lm_eval.models.get_model("hf-causal")(
-                pretrained=model,
-                batch_size=batch_size,
-                )
-        no_cache = True
-    else:
-        assert isinstance(model, lm_eval.base.LM)
-        lm = model
 
     if not no_cache:
         lm = lm_eval.base.CachingLM(
@@ -393,7 +405,7 @@ def evaluate(
 
 def make_table(result_dict):
     """Generate table of results."""
-    from pytablewriter import MarkdownTableWriter, LatexTableWriter
+    from pytablewriter import LatexTableWriter, MarkdownTableWriter
 
     md_writer = MarkdownTableWriter()
     latex_writer = LatexTableWriter()
