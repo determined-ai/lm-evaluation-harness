@@ -65,7 +65,6 @@ def simple_evaluate(
 
     assert tasks != [], "No tasks specified"
     assert isinstance(model, str), "Expected the model to be specified as a string"
-    assert isinstance(model_args, str), "Expected model_args to be a string"
     assert (
         sum((uuid is None, model_args is None)) == 1
     ), f"Expected exactly one of uuid and model_args to be None, recieved {uuid}, {model_args}"
