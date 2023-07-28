@@ -65,6 +65,9 @@ def simple_evaluate(
 
     assert tasks != [], "No tasks specified"
     assert isinstance(model, str), "Expected the model to be specified as a string"
+    assert model_args is None or isinstance(
+        model_args, str
+    ), "Expected model_args to be None or a str"
     assert (
         sum((uuid is None, model_args is None)) == 1
     ), f"Expected exactly one of uuid and model_args to be None, recieved {uuid}, {model_args}"
@@ -84,7 +87,7 @@ def simple_evaluate(
             model_args, {"batch_size": batch_size, "device": device}
         )
 
-    if not no_cache:
+    if not no_cache and model_args is not None:
         lm = lm_eval.base.CachingLM(
             lm,
             "lm_cache/"
