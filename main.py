@@ -84,8 +84,6 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         limit=args.limit,
         description_dict=description_dict,
         check_integrity=args.check_integrity,
-        write_out=args.write_out,
-        output_base_path=args.output_base_path,
     )
     core_context.train.report_validation_metrics(steps_completed=0, metrics=results)
 
@@ -93,7 +91,6 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
     print(dumped)
 
     if args.output_path:
-        os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
         with open(args.output_path, "w") as f:
             f.write(dumped)
 
