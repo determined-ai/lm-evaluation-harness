@@ -85,7 +85,12 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         description_dict=description_dict,
         check_integrity=args.check_integrity,
     )
-    core_context.train.report_validation_metrics(steps_completed=0, metrics=results)
+    all_metrics = {}
+    for task_name, metrics in results["results"].items():
+        for metric_name, value in metrics.items():
+            all_metrics[f"{task_name}_{metric_name}"] = value
+
+    core_context.train.report_validation_metrics(steps_completed=0, metrics=all_metrics)
 
     dumped = json.dumps(results, indent=2)
     print(dumped)
