@@ -56,7 +56,6 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         with open(args.description_dict_path, "r") as f:
             description_dict = json.load(f)
 
-    model = "hf"
     uuid = hparams["model_args"]["uuid"]
     if uuid is None:
         model_args = (
@@ -72,7 +71,7 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
     assert task_names
 
     results = evaluator.simple_evaluate(
-        model=model,
+        model="hf",
         core_context=core_context,
         uuid=uuid,
         model_args=model_args,

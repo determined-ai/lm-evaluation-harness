@@ -78,7 +78,9 @@ def simple_evaluate(
 
     assert tasks != [], "No tasks specified"
     assert isinstance(model, str), "Expected the model to be specified as a string"
-    assert isinstance(model_args, str), "Expected model_args to be a string"
+    assert model_args is None or isinstance(
+        model_args, str
+    ), f"Expected model_args to be None or a str, received {model_args} of type {type(model_args)}"
     assert (
         sum((uuid is None, model_args is None)) == 1
     ), f"Expected exactly one of uuid and model_args to be None, recieved {uuid}, {model_args}"
@@ -93,20 +95,19 @@ def simple_evaluate(
                     "pretrained": get_last_checkpoint(path),
                 },
             )
-    else:
+    elif model_args is not None:
         lm = lm_eval.models.get_model(model).create_from_arg_string(
             model_args, {"batch_size": batch_size, "max_batch_size": max_batch_size, "device": device}
         )
-
-    if not no_cache:
-        lm = lm_eval.base.CachingLM(
-            lm,
-            "lm_cache/"
-            + (model if isinstance(model, str) else model.model.config._name_or_path)
-            + "_"
-            + model_args.replace("=", "-").replace(",", "_").replace("/", "-")
-            + ".db",
-        )
+        if not no_cache:
+            lm = lm_eval.base.CachingLM(
+                lm,
+                "lm_cache/"
+                + model
+                + "_"
+                + model_args.replace("=", "-").replace(",", "_").replace("/", "-")
+                + ".db",
+            )
 
     task_dict = lm_eval.tasks.get_task_dict(tasks)
 
