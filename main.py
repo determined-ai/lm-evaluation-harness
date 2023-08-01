@@ -28,6 +28,8 @@ def parse_args():
     parser.add_argument("--no_cache", action="store_true")
     parser.add_argument("--description_dict_path", default=None)
     parser.add_argument("--check_integrity", action="store_true")
+    parser.add_argument("--write_out", action="store_true", default=False)
+    parser.add_argument("--output_base_path", type=str, default=None)
     return parser.parse_args()
 
 
@@ -84,6 +86,8 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         limit=args.limit,
         description_dict=description_dict,
         check_integrity=args.check_integrity,
+        write_out=args.write_out,
+        output_base_path=args.output_base_path,
     )
 
     all_metrics = {}
