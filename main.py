@@ -88,6 +88,7 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         write_out=args.write_out,
         output_base_path=args.output_base_path,
     )
+    core_context.train.report_validation_metrics(steps_completed=0, metrics=results)
 
     all_metrics = {}
     assert len(results["results"]) == 1, "Each trial should execute one task only."
