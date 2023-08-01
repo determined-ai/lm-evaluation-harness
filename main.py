@@ -58,13 +58,12 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         with open(args.description_dict_path, "r") as f:
             description_dict = json.load(f)
 
+    trust_remote_code = hparams["model_args"].pop("trust_remote_code", True)
+    model_args = f'trust_remote_code={trust_remote_code}'
+
     uuid = hparams["model_args"]["uuid"]
     if uuid is None:
-        model_args = (
-            f'pretrained={hparams["model_args"]["pretrained_model_name_or_path"]}'
-        )
-    else:
-        model_args = None
+        model_args += f',pretrained={hparams["model_args"]["pretrained_model_name_or_path"]}'
 
     # GG_NOTE: task will always be a single string, but it may be a glob-pattern which will get
     # converted to multiple tests.
