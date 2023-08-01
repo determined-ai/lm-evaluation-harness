@@ -58,7 +58,7 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         with open(args.description_dict_path, "r") as f:
             description_dict = json.load(f)
 
-    trust_remote_code = hparams["model_args"].pop("trust_remote_code", True)
+    trust_remote_code = hparams["model_args"].pop("trust_remote_code", False)
     model_args = f'trust_remote_code={trust_remote_code}'
 
     uuid = hparams["model_args"]["uuid"]
