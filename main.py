@@ -85,7 +85,10 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         description_dict=description_dict,
         check_integrity=args.check_integrity,
     )
+
     all_metrics = {}
+    assert len(results["results"]) == 1, "Each trial should execute one task only."
+
     for task_name, metrics in results["results"].items():
         for metric_name, value in metrics.items():
             all_metrics[f"{metric_name}"] = value
