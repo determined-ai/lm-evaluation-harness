@@ -88,7 +88,7 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
     all_metrics = {}
     for task_name, metrics in results["results"].items():
         for metric_name, value in metrics.items():
-            all_metrics[f"{task_name}_{metric_name}"] = value
+            all_metrics[f"{metric_name}"] = value
 
     core_context.train.report_validation_metrics(steps_completed=0, metrics=all_metrics)
 
