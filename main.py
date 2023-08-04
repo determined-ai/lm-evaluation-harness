@@ -58,12 +58,13 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         with open(args.description_dict_path, "r") as f:
             description_dict = json.load(f)
 
-    trust_remote_code = hparams["model_args"].pop("trust_remote_code", False)
-    model_args = f'trust_remote_code={trust_remote_code}'
-
     uuid = hparams["model_args"]["uuid"]
     if uuid is None:
-        model_args += f',pretrained={hparams["model_args"]["pretrained_model_name_or_path"]}'
+        model_args = f'pretrained={hparams["model_args"]["pretrained_model_name_or_path"]}'
+        trust_remote_code = hparams["model_args"].pop("trust_remote_code", False)
+        model_args += f',trust_remote_code={trust_remote_code}'
+    else:
+        model_args = None
 
     # GG_NOTE: task will always be a single string, but it may be a glob-pattern which will get
     # converted to multiple tests.
@@ -91,11 +92,10 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
     core_context.train.report_validation_metrics(steps_completed=0, metrics=results)
 
     all_metrics = {}
-    assert len(results["results"]) == 1, "Each trial should execute one task only."
 
     for task_name, metrics in results["results"].items():
         for metric_name, value in metrics.items():
-            all_metrics[f"{metric_name}"] = value
+            all_metrics[f"{task_name}_{metric_name}"] = value
 
     # AC_NOTE: use trial_id as steps completed to scatter point-results
     # in the WebUI plot.

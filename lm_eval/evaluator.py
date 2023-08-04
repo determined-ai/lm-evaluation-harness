@@ -83,7 +83,7 @@ def simple_evaluate(
     ), f"Expected model_args to be None or a str, received {model_args} of type {type(model_args)}"
     assert (
         sum((uuid is None, model_args is None)) == 1
-    ), f"Expected exactly one of uuid and model_args to be None, recieved {uuid}, {model_args}"
+    ), f"Expected exactly one of uuid and model_args to be None, received {uuid}, {model_args}"
     if uuid is not None:
         logging.info(f"Loading model from checkpoint uuid {uuid}")
         with core_context.checkpoint.restore_path(uuid) as path:
