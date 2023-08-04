@@ -11,35 +11,25 @@ from lm_eval import evaluator, tasks
 logging.getLogger("openai").setLevel(logging.WARNING)
 
 
-class MultiChoice:
-    def __init__(self, choices):
-        self.choices = choices
-
-    # Simple wildcard support (linux filename patterns)
-    def __contains__(self, values):
-        for value in values.split(","):
-            if len(fnmatch.filter(self.choices, value)) == 0:
-                return False
-
-        return True
-
-    def __iter__(self):
-        for choice in self.choices:
-            yield choice
-
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_args", default="")
     parser.add_argument("--provide_description", action="store_true")
     parser.add_argument("--num_fewshot", type=int, default=0)
-    parser.add_argument("--batch_size", type=int, default=None)
+    parser.add_argument("--batch_size", type=str, default=None)
+    parser.add_argument("--max_batch_size", type=int, default=None,
+                        help="Maximal batch size to try with --batch_size auto")
     parser.add_argument("--device", type=str, default=None)
     parser.add_argument("--output_path", default=None)
-    parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--limit", type=float, default=None,
+                        help="Limit the number of examples per task. "
+                             "If <1, limit is a percentage of the total number of examples.")
+    parser.add_argument("--data_sampling", type=float, default=None)
     parser.add_argument("--no_cache", action="store_true")
     parser.add_argument("--description_dict_path", default=None)
     parser.add_argument("--check_integrity", action="store_true")
+    parser.add_argument("--write_out", action="store_true", default=False)
+    parser.add_argument("--output_base_path", type=str, default=None)
     return parser.parse_args()
 
 
@@ -70,9 +60,9 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
 
     uuid = hparams["model_args"]["uuid"]
     if uuid is None:
-        model_args = (
-            f'pretrained={hparams["model_args"]["pretrained_model_name_or_path"]}'
-        )
+        model_args = f'pretrained={hparams["model_args"]["pretrained_model_name_or_path"]}'
+        trust_remote_code = hparams["model_args"].pop("trust_remote_code", False)
+        model_args += f',trust_remote_code={trust_remote_code}'
     else:
         model_args = None
 
@@ -90,13 +80,27 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         tasks=task_names,
         num_fewshot=args.num_fewshot,
         batch_size=args.batch_size,
+        max_batch_size=args.max_batch_size,
         device=args.device,
         no_cache=args.no_cache,
         limit=args.limit,
         description_dict=description_dict,
         check_integrity=args.check_integrity,
+        write_out=args.write_out,
+        output_base_path=args.output_base_path,
     )
     core_context.train.report_validation_metrics(steps_completed=0, metrics=results)
+
+    all_metrics = {}
+
+    for task_name, metrics in results["results"].items():
+        for metric_name, value in metrics.items():
+            all_metrics[f"{task_name}_{metric_name}"] = value
+
+    # AC_NOTE: use trial_id as steps completed to scatter point-results
+    # in the WebUI plot.
+    trial_id = det.get_cluster_info().trial.trial_id
+    core_context.train.report_validation_metrics(steps_completed=trial_id, metrics=all_metrics)
 
     dumped = json.dumps(results, indent=2)
     print(dumped)
