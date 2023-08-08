@@ -58,13 +58,19 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         with open(args.description_dict_path, "r") as f:
             description_dict = json.load(f)
 
+    model_args = [f'trust_remote_code={hparams["model_args"]["trust_remote_code"]}',
+                  f'use_accelerate={hparams["eval_config"]["use_accelerate"]}']
+
     uuid = hparams["model_args"]["uuid"]
     if uuid is None:
-        model_args = f'pretrained={hparams["model_args"]["pretrained_model_name_or_path"]}'
-        trust_remote_code = hparams["model_args"].pop("trust_remote_code", False)
-        model_args += f',trust_remote_code={trust_remote_code}'
-    else:
-        model_args = None
+        model_args.append(f'pretrained={hparams["model_args"]["pretrained_model_name_or_path"]}')
+
+    token = hparams["model_args"]["token"]
+    if token is not None:
+        model_args.append(f"token={token}")
+
+    model_args = ','.join(model_args)
+    logging.error(model_args)
 
     # GG_NOTE: task will always be a single string, but it may be a glob-pattern which will get
     # converted to multiple tests.
@@ -72,13 +78,15 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
     task_names = pattern_match([hparams["task"]], tasks.ALL_TASKS)
     assert task_names
 
+    num_fewshot = hparams["eval_config"].pop("num_fewshot", 0)
+
     results = evaluator.simple_evaluate(
-        model="hf",
+        model="hf-causal-experimental",
         core_context=core_context,
         uuid=uuid,
         model_args=model_args,
         tasks=task_names,
-        num_fewshot=args.num_fewshot,
+        num_fewshot=num_fewshot,
         batch_size=args.batch_size,
         max_batch_size=args.max_batch_size,
         device=args.device,

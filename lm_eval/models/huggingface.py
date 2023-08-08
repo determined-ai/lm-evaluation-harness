@@ -93,6 +93,7 @@ class HuggingFaceAutoLM(BaseLM):
         gptq_use_triton: Optional[bool] = False,
         bnb_4bit_quant_type: Optional[str] = None,
         bnb_4bit_compute_dtype: Optional[Union[str, torch.dtype]] = None,
+        token: Optional[str] = None,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation.
         Args:
@@ -195,6 +196,7 @@ class HuggingFaceAutoLM(BaseLM):
             pretrained,
             trust_remote_code=trust_remote_code,
             revision=revision + ("/" + subfolder if subfolder is not None else ""),
+            use_auth_token=token,
         )
 
         self._add_special_tokens = add_special_tokens
@@ -204,6 +206,7 @@ class HuggingFaceAutoLM(BaseLM):
             subfolder=subfolder,
             tokenizer=tokenizer,
             trust_remote_code=trust_remote_code,
+            token=token,
         )
         self.tokenizer.model_max_length = self.max_length
 
@@ -215,6 +218,8 @@ class HuggingFaceAutoLM(BaseLM):
                 max_cpu_memory,
                 offload_folder,
             )
+        if token:
+            model_kwargs["token"] = token
         self.model = self._create_auto_model(
             pretrained=pretrained,
             quantized=quantized,
@@ -332,12 +337,14 @@ class HuggingFaceAutoLM(BaseLM):
         subfolder: str,
         tokenizer: Optional[str] = None,
         trust_remote_code: bool = False,
+        token: Optional[str] = None,
     ) -> transformers.PreTrainedTokenizer:
         """Returns a pre-trained tokenizer from a pre-trained tokenizer configuration."""
         tokenizer = self.AUTO_TOKENIZER_CLASS.from_pretrained(
             pretrained if tokenizer is None else tokenizer,
             revision=revision + ("/" + subfolder if subfolder is not None else ""),
             trust_remote_code=trust_remote_code,
+            token=token,
         )
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
