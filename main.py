@@ -97,13 +97,19 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         write_out=args.write_out,
         output_base_path=args.output_base_path,
     )
-    core_context.train.report_validation_metrics(steps_completed=0, metrics=results)
-
     all_metrics = {}
-
+    avg_metrics = {}
     for task_name, metrics in results["results"].items():
         for metric_name, value in metrics.items():
             all_metrics[f"{task_name}_{metric_name}"] = value
+
+            avg_metric_name = f"avg_{metric_name}"
+            if avg_metric_name not in avg_metrics:
+                avg_metrics[avg_metric_name] = []
+            avg_metrics[avg_metric_name].append(value)
+
+    avg_metrics = {metric_name: sum(values)/len(values) for metric_name, values in avg_metrics.items()}
+    all_metrics.update(avg_metrics)
 
     # AC_NOTE: use trial_id as steps completed to scatter point-results
     # in the WebUI plot.
