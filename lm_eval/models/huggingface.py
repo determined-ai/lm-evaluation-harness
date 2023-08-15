@@ -1,3 +1,4 @@
+import logging
 import math
 import torch
 import torch.nn.functional as F
@@ -200,6 +201,7 @@ class HuggingFaceAutoLM(BaseLM):
         )
 
         self._add_special_tokens = add_special_tokens
+        logging.error(token)
         self.tokenizer = self._create_auto_tokenizer(
             pretrained=pretrained,
             revision=revision,
@@ -220,6 +222,7 @@ class HuggingFaceAutoLM(BaseLM):
             )
         if token:
             model_kwargs["token"] = token
+
         self.model = self._create_auto_model(
             pretrained=pretrained,
             quantized=quantized,
@@ -275,12 +278,14 @@ class HuggingFaceAutoLM(BaseLM):
         gptq_use_triton: Optional[bool] = False,
         bnb_4bit_quant_type: Optional[str] = None,
         bnb_4bit_compute_dtype: Optional[Union[str, torch.dtype]] = None,
+        token: Optional[str] = None,
     ) -> transformers.AutoModel:
         """Returns a pre-trained pytorch model from a pre-trained model configuration."""
         if not quantized:
             if load_in_4bit:
                 assert transformers.__version__ >= "4.30.0", "load_in_4bit requires transformers >= 4.30.0"
             model_kwargs = {}
+
             if transformers.__version__ >= "4.30.0":
                 model_kwargs["load_in_4bit"] = load_in_4bit
                 if load_in_4bit:
@@ -295,6 +300,7 @@ class HuggingFaceAutoLM(BaseLM):
                 load_in_8bit=load_in_8bit,
                 trust_remote_code=trust_remote_code,
                 torch_dtype=torch_dtype,
+                use_auth_token=token,
                 **model_kwargs,
             )
         else:
@@ -344,7 +350,7 @@ class HuggingFaceAutoLM(BaseLM):
             pretrained if tokenizer is None else tokenizer,
             revision=revision + ("/" + subfolder if subfolder is not None else ""),
             trust_remote_code=trust_remote_code,
-            token=token,
+            use_auth_token=token,
         )
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
