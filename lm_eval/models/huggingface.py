@@ -501,23 +501,6 @@ class AutoCausalLM(HuggingFaceAutoLM):
     AUTO_MODEL_CLASS = transformers.AutoModelForCausalLM
     AUTO_PEFT_CLASS = peft.PeftModel
 
-    def _create_auto_tokenizer(
-        self,
-        *,
-        pretrained: str,
-        revision: str,
-        subfolder: str,
-        tokenizer: Optional[str] = None,
-    ) -> transformers.PreTrainedTokenizer:
-        tokenizer = super()._create_auto_tokenizer(
-            pretrained=pretrained,
-            revision=revision,
-            subfolder=subfolder,
-            tokenizer=tokenizer,
-        )
-        tokenizer.padding_side = "left"
-        return tokenizer
-
     def _model_call(
         self, inputs: TokenSequence, labels: Optional[TokenSequence] = None
     ) -> TokenSequence:
