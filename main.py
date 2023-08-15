@@ -70,7 +70,6 @@ def main(core_context: det.core.Context, hparams: Dict[str, Any]):
         model_args.append(f"token={token}")
 
     model_args = ','.join(model_args)
-    logging.error(model_args)
 
     # GG_NOTE: task will always be a single string, but it may be a glob-pattern which will get
     # converted to multiple tests.
@@ -136,4 +135,7 @@ if __name__ == "__main__":
     except KeyError:
         distributed = None
     with det.core.init(distributed=distributed) as core_context:
-        main(core_context, hparams)
+        if core_context.distributed.local_rank == 0:
+            main(core_context, hparams)
+        else:
+            logging.info("Local rank !=0 does nothing.")

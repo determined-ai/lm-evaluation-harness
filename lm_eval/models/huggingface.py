@@ -201,7 +201,6 @@ class HuggingFaceAutoLM(BaseLM):
         )
 
         self._add_special_tokens = add_special_tokens
-        logging.error(token)
         self.tokenizer = self._create_auto_tokenizer(
             pretrained=pretrained,
             revision=revision,
@@ -222,6 +221,10 @@ class HuggingFaceAutoLM(BaseLM):
             )
         if token:
             model_kwargs["token"] = token
+
+        import torch
+        available_gpus = [torch.cuda.device(i) for i in range(torch.cuda.device_count())]
+        print(available_gpus)
 
         self.model = self._create_auto_model(
             pretrained=pretrained,
@@ -303,6 +306,7 @@ class HuggingFaceAutoLM(BaseLM):
                 use_auth_token=token,
                 **model_kwargs,
             )
+            logging.info(model.hf_device_map)
         else:
             from auto_gptq import AutoGPTQForCausalLM
             model = AutoGPTQForCausalLM.from_quantized(
