@@ -222,10 +222,6 @@ class HuggingFaceAutoLM(BaseLM):
         if token:
             model_kwargs["token"] = token
 
-        import torch
-        available_gpus = [torch.cuda.device(i) for i in range(torch.cuda.device_count())]
-        print(available_gpus)
-
         self.model = self._create_auto_model(
             pretrained=pretrained,
             quantized=quantized,
