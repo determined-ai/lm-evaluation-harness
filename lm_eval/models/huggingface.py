@@ -302,7 +302,7 @@ class HuggingFaceAutoLM(BaseLM):
                 use_auth_token=token,
                 **model_kwargs,
             )
-            logging.info(model.hf_device_map)
+            logging.info(f"Model allocation per-layer: {model.hf_device_map}")
         else:
             from auto_gptq import AutoGPTQForCausalLM
             model = AutoGPTQForCausalLM.from_quantized(

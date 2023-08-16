@@ -137,5 +137,3 @@ if __name__ == "__main__":
     with det.core.init(distributed=distributed) as core_context:
         if core_context.distributed.local_rank == 0:
             main(core_context, hparams)
-        else:
-            logging.info("Local rank !=0 does nothing.")
