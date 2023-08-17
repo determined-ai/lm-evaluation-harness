@@ -1,3 +1,4 @@
+import logging
 import math
 import torch
 import torch.nn.functional as F
@@ -93,6 +94,7 @@ class HuggingFaceAutoLM(BaseLM):
         gptq_use_triton: Optional[bool] = False,
         bnb_4bit_quant_type: Optional[str] = None,
         bnb_4bit_compute_dtype: Optional[Union[str, torch.dtype]] = None,
+        token: Optional[str] = None,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation.
         Args:
@@ -195,6 +197,7 @@ class HuggingFaceAutoLM(BaseLM):
             pretrained,
             trust_remote_code=trust_remote_code,
             revision=revision + ("/" + subfolder if subfolder is not None else ""),
+            use_auth_token=token,
         )
 
         self._add_special_tokens = add_special_tokens
@@ -204,6 +207,7 @@ class HuggingFaceAutoLM(BaseLM):
             subfolder=subfolder,
             tokenizer=tokenizer,
             trust_remote_code=trust_remote_code,
+            token=token,
         )
         self.tokenizer.model_max_length = self.max_length
 
@@ -215,6 +219,9 @@ class HuggingFaceAutoLM(BaseLM):
                 max_cpu_memory,
                 offload_folder,
             )
+        if token:
+            model_kwargs["token"] = token
+
         self.model = self._create_auto_model(
             pretrained=pretrained,
             quantized=quantized,
@@ -270,12 +277,14 @@ class HuggingFaceAutoLM(BaseLM):
         gptq_use_triton: Optional[bool] = False,
         bnb_4bit_quant_type: Optional[str] = None,
         bnb_4bit_compute_dtype: Optional[Union[str, torch.dtype]] = None,
+        token: Optional[str] = None,
     ) -> transformers.AutoModel:
         """Returns a pre-trained pytorch model from a pre-trained model configuration."""
         if not quantized:
             if load_in_4bit:
                 assert transformers.__version__ >= "4.30.0", "load_in_4bit requires transformers >= 4.30.0"
             model_kwargs = {}
+
             if transformers.__version__ >= "4.30.0":
                 model_kwargs["load_in_4bit"] = load_in_4bit
                 if load_in_4bit:
@@ -290,8 +299,10 @@ class HuggingFaceAutoLM(BaseLM):
                 load_in_8bit=load_in_8bit,
                 trust_remote_code=trust_remote_code,
                 torch_dtype=torch_dtype,
+                use_auth_token=token,
                 **model_kwargs,
             )
+            logging.info(f"Model allocation per-layer: {model.hf_device_map}")
         else:
             from auto_gptq import AutoGPTQForCausalLM
             model = AutoGPTQForCausalLM.from_quantized(
@@ -332,12 +343,14 @@ class HuggingFaceAutoLM(BaseLM):
         subfolder: str,
         tokenizer: Optional[str] = None,
         trust_remote_code: bool = False,
+        token: Optional[str] = None,
     ) -> transformers.PreTrainedTokenizer:
         """Returns a pre-trained tokenizer from a pre-trained tokenizer configuration."""
         tokenizer = self.AUTO_TOKENIZER_CLASS.from_pretrained(
             pretrained if tokenizer is None else tokenizer,
             revision=revision + ("/" + subfolder if subfolder is not None else ""),
             trust_remote_code=trust_remote_code,
+            use_auth_token=token,
         )
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
@@ -493,23 +506,6 @@ class AutoCausalLM(HuggingFaceAutoLM):
 
     AUTO_MODEL_CLASS = transformers.AutoModelForCausalLM
     AUTO_PEFT_CLASS = peft.PeftModel
-
-    def _create_auto_tokenizer(
-        self,
-        *,
-        pretrained: str,
-        revision: str,
-        subfolder: str,
-        tokenizer: Optional[str] = None,
-    ) -> transformers.PreTrainedTokenizer:
-        tokenizer = super()._create_auto_tokenizer(
-            pretrained=pretrained,
-            revision=revision,
-            subfolder=subfolder,
-            tokenizer=tokenizer,
-        )
-        tokenizer.padding_side = "left"
-        return tokenizer
 
     def _model_call(
         self, inputs: TokenSequence, labels: Optional[TokenSequence] = None

@@ -81,14 +81,11 @@ def simple_evaluate(
     assert model_args is None or isinstance(
         model_args, str
     ), f"Expected model_args to be None or a str, received {model_args} of type {type(model_args)}"
-    assert (
-        sum((uuid is None, model_args is None)) == 1
-    ), f"Expected exactly one of uuid and model_args to be None, received {uuid}, {model_args}"
     if uuid is not None:
         logging.info(f"Loading model from checkpoint uuid {uuid}")
         with core_context.checkpoint.restore_path(uuid) as path:
             lm = lm_eval.models.get_model(model).create_from_arg_string(
-                "",
+                model_args,
                 {
                     "batch_size": batch_size,
                     "device": device,
